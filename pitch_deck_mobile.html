@@ -2,687 +2,554 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0">
 <title>Auto Trading Engine — Pitch Deck</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{font-size:16px;scroll-behavior:smooth;}
-body{font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;color:#fff;background:#060818;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
 
-/* ── TOKENS ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;font-size:15px;}
+body{font-family:'Space Grotesk',system-ui,-apple-system,sans-serif;color:#fff;background:#060818;-webkit-font-smoothing:antialiased;}
+
 :root{
   --cyan:#06C6D4;--vio:#8B5CF6;--cr:#DF3C5F;--green:#22C55E;
-  --ph:clamp(16px,5vw,32px);
   --ease:cubic-bezier(0.22,1,0.36,1);
-  --card-bg:rgba(255,255,255,.10);
-  --card-border:rgba(255,255,255,.16);
+  --hdr:44px; --ftr:36px;
 }
 
-/* ── DARK/LIGHT TOGGLE ── */
-#theme-toggle{
-  position:fixed;top:12px;right:16px;z-index:999;
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
-  border-radius:100px;padding:6px 14px;cursor:pointer;
-  font-family:'Space Mono',monospace;font-size:11px;font-weight:700;
-  letter-spacing:.08em;color:rgba(255,255,255,.85);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  transition:all .3s;user-select:none;display:flex;align-items:center;gap:5px;
-}
-body.light #theme-toggle{background:rgba(0,0,0,.07);border-color:rgba(0,0,0,.18);color:rgba(0,0,0,.78);}
+/* ════ CANVAS BG ════ */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
-/* ── SLIDE SYSTEM ── */
+/* ════ FIXED HEADER ════ */
+#mob-header{
+  position:fixed;top:0;left:0;right:0;height:var(--hdr);
+  padding:0 10px;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,8,24,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.hdr-company{font-family:'Space Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:#fff;}
+.hdr-num{font-family:'Space Mono',monospace;font-size:11px;font-style:italic;color:rgba(255,255,255,.55);}
+body.light #mob-header{background:rgba(240,244,255,.90);border-color:rgba(0,0,0,.08);}
+body.light .hdr-company{color:#0D1020;}
+body.light .hdr-num{color:rgba(0,0,0,.50);}
+
+/* ════ FIXED FOOTER ════ */
+#mob-footer{
+  position:fixed;bottom:0;left:0;right:0;height:var(--ftr);
+  padding:0 10px;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(6,8,24,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.ftr-disc{font-size:9.5px;color:rgba(255,255,255,.35);letter-spacing:.02em;}
+body.light #mob-footer{background:rgba(240,244,255,.90);border-color:rgba(0,0,0,.08);}
+body.light .ftr-disc{color:rgba(0,0,0,.35);}
+
+/* ── Slide dots ── */
+.ftr-dots{display:flex;gap:6px;align-items:center;}
+.ftr-dot{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.25);transition:all .3s;}
+.ftr-dot.on{background:#fff;transform:scale(1.5);}
+body.light .ftr-dot{background:rgba(0,0,0,.20);}
+body.light .ftr-dot.on{background:#224193;}
+
+/* ── iOS Toggle ── */
+.toggle-wrap{display:flex;align-items:center;gap:6px;}
+.toggle-lbl{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.50);}
+body.light .toggle-lbl{color:rgba(0,0,0,.45);}
+.ios-toggle{
+  width:38px;height:22px;border-radius:11px;
+  background:rgba(255,255,255,.20);border:1px solid rgba(255,255,255,.18);
+  position:relative;cursor:pointer;transition:background .3s,border-color .3s;
+  flex-shrink:0;-webkit-tap-highlight-color:transparent;
+}
+.ios-toggle.on{background:#2196F3;border-color:#1976D2;}
+.ios-toggle::after{
+  content:'';position:absolute;top:2px;left:2px;
+  width:16px;height:16px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 4px rgba(0,0,0,.30);
+  transition:transform .3s var(--ease);
+}
+.ios-toggle.on::after{transform:translateX(16px);}
+
+/* ════ DECK CONTAINER — horizontal scroll ════ */
+#deck{
+  position:fixed;top:var(--hdr);bottom:var(--ftr);left:0;
+  width:100%;z-index:10;
+  display:flex;overflow:hidden;
+}
+
+/* ════ SLIDE ════ */
 .slide{
-  min-height:100svh;padding:clamp(60px,10vw,80px) var(--ph) clamp(40px,8vw,60px);
-  display:flex;flex-direction:column;justify-content:center;
-  position:relative;overflow:hidden;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  min-width:100%;width:100%;height:100%;
+  flex-shrink:0;overflow-y:auto;overflow-x:hidden;
+  padding:10px 10px;
+  position:relative;
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
 }
 .slide::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:-1;
   background:linear-gradient(160deg,rgba(6,8,24,.65),rgba(10,6,28,.72));
-  z-index:0;
 }
-.slide-inner{position:relative;z-index:1;width:100%;max-width:680px;margin:0 auto;}
+body.light .slide::before{background:linear-gradient(160deg,rgba(240,244,255,.82),rgba(235,232,255,.88));}
+body.light{background:#F0F4FF;}
 
-/* ── SLIDE NUMBER ── */
-.slide-num{
-  font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,.45);
-  letter-spacing:.18em;margin-bottom:clamp(12px,3vw,20px);
-}
-body.light .slide-num{color:rgba(0,0,0,.45);}
+/* ── Rule line ── */
+.rule{height:1px;background:linear-gradient(90deg,transparent,rgba(111,155,209,.7) 30%,rgba(139,92,246,.6) 70%,transparent);margin-bottom:12px;}
 
-/* ── EYEBROW ── */
-.eyebrow{
-  font-family:'Space Mono',monospace;font-size:clamp(10px,3vw,13px);
-  font-weight:700;letter-spacing:.22em;text-transform:uppercase;
-  background:linear-gradient(90deg,#06C6D4,#8B5CF6);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  margin-bottom:10px;
-}
+/* ── Typography ── */
+.eyebrow{font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.20em;text-transform:uppercase;background:linear-gradient(90deg,#06C6D4,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
 body.light .eyebrow{background:linear-gradient(90deg,#0499A5,#6D28D9);-webkit-background-clip:text;background-clip:text;}
 
-/* ── HEADLINES ── */
-.headline{
-  font-family:'Space Grotesk',sans-serif;
-  font-size:clamp(1.8rem,8vw,3rem);
-  font-weight:700;line-height:1.05;letter-spacing:-.025em;color:#fff;
-  margin-bottom:clamp(10px,3vw,16px);
-}
+.headline{font-family:'Space Grotesk',sans-serif;font-size:clamp(1.5rem,7vw,2.2rem);font-weight:700;line-height:1.05;letter-spacing:-.025em;color:#fff;margin-bottom:8px;}
 .headline span{background:linear-gradient(120deg,#06C6D4,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 body.light .headline{color:#0D1020;}
 body.light .headline span{background:linear-gradient(120deg,#0499A5,#6D28D9);-webkit-background-clip:text;background-clip:text;}
 
-.sub{font-size:clamp(13px,3.5vw,16px);color:rgba(255,255,255,.70);line-height:1.65;margin-bottom:clamp(14px,4vw,22px);}
-body.light .sub{color:rgba(0,0,0,.65);}
+.sub{font-size:12px;color:rgba(255,255,255,.68);line-height:1.55;margin-bottom:10px;font-style:italic;}
+body.light .sub{color:rgba(0,0,0,.62);}
 
-/* ── CARD ── */
-.card{
-  background:var(--card-bg);border:1px solid var(--card-border);
-  border-radius:12px;padding:clamp(12px,4vw,18px);margin-bottom:10px;
-}
+/* ── Card ── */
+.card{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
 body.light .card{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);}
 
-/* ── DROPDOWN ACCORDION ── */
-.acc-header{
-  display:flex;align-items:center;justify-content:space-between;
-  cursor:pointer;gap:10px;-webkit-tap-highlight-color:transparent;
-  padding:2px 0;
-}
-.acc-title{font-size:clamp(13px,3.8vw,16px);font-weight:600;color:#fff;line-height:1.3;}
+/* ── Accordion ── */
+.acc-hdr{display:flex;align-items:center;justify-content:space-between;cursor:pointer;gap:8px;-webkit-tap-highlight-color:transparent;}
+.acc-hdr-left{display:flex;align-items:center;gap:8px;flex:1;}
+.acc-ico{width:20px;height:20px;flex-shrink:0;}
+.acc-ico svg{width:100%;height:100%;}
+.acc-title{font-size:13px;font-weight:600;color:#fff;line-height:1.3;}
 body.light .acc-title{color:#0D1020;}
-.acc-icon{
-  width:28px;height:28px;border-radius:50%;
-  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  transition:transform .3s var(--ease),background .2s;
-}
-body.light .acc-icon{background:rgba(0,0,0,.07);border-color:rgba(0,0,0,.14);}
-.acc-icon svg{width:14px;height:14px;stroke:#fff;transition:transform .3s;}
-body.light .acc-icon svg{stroke:#0D1020;}
-.acc.open .acc-icon svg{transform:rotate(180deg);}
-.acc-body{
-  max-height:0;overflow:hidden;
-  transition:max-height .4s var(--ease),opacity .3s;
-  opacity:0;
-}
-.acc.open .acc-body{max-height:400px;opacity:1;}
-.acc-content{padding-top:10px;font-size:clamp(12px,3.2vw,14px);color:rgba(255,255,255,.68);line-height:1.6;}
-body.light .acc-content{color:rgba(0,0,0,.62);}
+.acc-arrow{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .3s;}
+body.light .acc-arrow{background:rgba(0,0,0,.06);border-color:rgba(0,0,0,.12);}
+.acc-arrow svg{width:12px;height:12px;stroke:#fff;transition:transform .3s;}
+body.light .acc-arrow svg{stroke:#0D1020;}
+.acc.open .acc-arrow svg{transform:rotate(180deg);}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .35s var(--ease),opacity .25s;opacity:0;}
+.acc.open .acc-body{max-height:200px;opacity:1;}
+.acc-content{padding-top:8px;font-size:12px;color:rgba(255,255,255,.65);line-height:1.55;}
+body.light .acc-content{color:rgba(0,0,0,.60);}
 
-/* ── ICON ROW ── */
-.icon-row{display:flex;align-items:flex-start;gap:12px;}
-.icon-wrap{width:clamp(22px,5vw,28px);height:clamp(22px,5vw,28px);flex-shrink:0;margin-top:1px;}
-.icon-wrap svg{width:100%;height:100%;}
-
-/* ── STAT ROW ── */
-.stat-row{display:flex;gap:8px;margin-top:12px;}
-.stat-pill{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:8px 10px;text-align:center;}
+/* ── Stat pills ── */
+.stat-row{display:flex;gap:6px;margin-bottom:8px;}
+.stat-pill{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 6px;text-align:center;}
 body.light .stat-pill{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.10);}
-.stat-val{font-family:'Space Mono',monospace;font-size:clamp(14px,4vw,18px);font-weight:700;line-height:1;}
-.stat-lbl{font-family:'Space Mono',monospace;font-size:clamp(9px,2.2vw,11px);color:rgba(255,255,255,.50);letter-spacing:.08em;text-transform:uppercase;margin-top:3px;}
-body.light .stat-lbl{color:rgba(0,0,0,.50);}
+.stat-val{font-family:'Space Mono',monospace;font-size:clamp(13px,4vw,17px);font-weight:700;line-height:1;}
+.stat-lbl{font-family:'Space Mono',monospace;font-size:8.5px;color:rgba(255,255,255,.45);letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+body.light .stat-lbl{color:rgba(0,0,0,.45);}
 
-/* ── TABLE ── */
-.comp-table{width:100%;border-collapse:collapse;margin-top:14px;}
-.comp-table th{font-family:'Space Mono',monospace;font-size:clamp(9px,2.2vw,11px);font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.55);padding:6px 8px;text-align:left;border-bottom:1px solid rgba(255,255,255,.12);}
-body.light .comp-table th{color:rgba(0,0,0,.50);border-color:rgba(0,0,0,.12);}
-.comp-table td{font-size:clamp(12px,3.2vw,14px);padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.82);vertical-align:middle;}
-body.light .comp-table td{color:rgba(0,0,0,.78);border-color:rgba(0,0,0,.07);}
-.comp-table tr:last-child td{border-bottom:none;}
-.comp-table .our-row td{font-weight:700;}
-.comp-table .our-row.green td:first-child{color:#22C55E;}
-.comp-table .our-row.red td:first-child{color:#EF4444;}
-.badge{display:inline-block;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:100px;border:1px solid;}
+/* ── Table ── */
+.mob-table{width:100%;border-collapse:collapse;margin-bottom:8px;}
+.mob-table th{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.50);padding:5px 6px;text-align:left;border-bottom:1px solid rgba(255,255,255,.12);}
+body.light .mob-table th{color:rgba(0,0,0,.50);border-color:rgba(0,0,0,.12);}
+.mob-table td{font-size:12px;padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.80);vertical-align:middle;}
+body.light .mob-table td{color:rgba(0,0,0,.75);border-color:rgba(0,0,0,.06);}
+.mob-table tr:last-child td{border-bottom:none;}
 
-/* ── PROGRESS / FLOW ── */
-.flow{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:16px;}
-.flow-node{
-  width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);
-  border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;
-}
-body.light .flow-node{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);}
-.flow-node-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.flow-node-title{font-size:clamp(13px,3.8vw,15px);font-weight:700;color:#fff;}
-body.light .flow-node-title{color:#0D1020;}
-.flow-node-sub{font-size:clamp(11px,2.8vw,13px);color:rgba(255,255,255,.58);margin-top:2px;}
-body.light .flow-node-sub{color:rgba(0,0,0,.55);}
-.flow-arrow{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;}
-.chev{font-size:16px;line-height:1;animation:chev-pulse 1.2s ease-in-out infinite;}
-.chev:nth-child(1){opacity:.4;animation-delay:0s;}
-.chev:nth-child(2){opacity:.7;animation-delay:.15s;}
-.chev:nth-child(3){opacity:1;animation-delay:.30s;}
-@keyframes chev-pulse{0%,100%{transform:translateY(0);}50%{transform:translateY(3px);}}
-.flow-split{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:0;}
-.flow-split-node{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;text-align:center;}
-body.light .flow-split-node{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);}
-.flow-split-title{font-size:clamp(13px,3.5vw,15px);font-weight:700;}
-.flow-split-sub{font-size:clamp(10px,2.6vw,12px);color:rgba(255,255,255,.55);margin-top:3px;}
-body.light .flow-split-sub{color:rgba(0,0,0,.50);}
+/* ── View chart button ── */
+.chart-btn{width:100%;padding:10px;background:rgba(6,198,212,.10);border:1px solid rgba(6,198,212,.30);border-radius:8px;cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#06C6D4;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:6px;-webkit-tap-highlight-color:transparent;}
+.chart-drawer{max-height:0;overflow:hidden;transition:max-height .45s var(--ease),opacity .3s;opacity:0;}
+.chart-drawer.open{max-height:260px;opacity:1;}
+.chart-wrap{position:relative;width:100%;height:clamp(160px,45vw,220px);}
+#eq-chart-mob{position:absolute;inset:0;width:100%;height:100%;display:block;}
 
-/* ── VIEW CHART BUTTON ── */
-.chart-toggle-btn{
-  width:100%;margin-top:10px;padding:12px 16px;
-  background:rgba(6,198,212,.10);border:1px solid rgba(6,198,212,.30);
-  border-radius:10px;cursor:pointer;
-  font-family:'Space Mono',monospace;font-size:clamp(11px,3vw,13px);
-  font-weight:700;letter-spacing:.10em;text-transform:uppercase;
-  color:#06C6D4;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:background .25s;-webkit-tap-highlight-color:transparent;
-}
-.chart-toggle-btn:active{background:rgba(6,198,212,.18);}
-.chart-panel{max-height:0;overflow:hidden;transition:max-height .5s var(--ease),opacity .3s;opacity:0;}
-.chart-panel.open{max-height:500px;opacity:1;}
-.chart-wrap{position:relative;width:100%;height:clamp(220px,55vw,320px);margin-top:12px;}
-#eq-chart{position:absolute;inset:0;width:100%;height:100%;display:block;}
+/* ── Flow diagram ── */
+.flow{display:flex;flex-direction:column;align-items:stretch;gap:0;margin-bottom:6px;}
+.flow-node{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px;}
+body.light .flow-node{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.10);}
+.flow-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.flow-title{font-size:13px;font-weight:700;color:#fff;line-height:1.2;}
+body.light .flow-title{color:#0D1020;}
+.flow-sub{font-size:10px;color:rgba(255,255,255,.52);margin-top:1px;}
+body.light .flow-sub{color:rgba(0,0,0,.48);}
+.flow-badge{font-family:'Space Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:100px;border:1px solid;white-space:nowrap;margin-left:auto;flex-shrink:0;}
+.flow-arrow{display:flex;justify-content:center;align-items:center;gap:2px;padding:2px 0;color:rgba(255,255,255,.40);font-size:13px;}
+body.light .flow-arrow{color:rgba(0,0,0,.30);}
+.flow-split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:0;}
+.flow-split-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px;text-align:center;}
+body.light .flow-split-card{background:rgba(0,0,0,.04);border-color:rgba(0,0,0,.10);}
+.flow-split-title{font-size:13px;font-weight:700;}
+.flow-split-sub{font-size:10px;color:rgba(255,255,255,.48);margin-top:2px;}
+body.light .flow-split-sub{color:rgba(0,0,0,.45);}
 
-/* ── S5 RISK CARDS ── */
-.risk-card{
-  background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);
-  border-radius:12px;padding:clamp(12px,4vw,16px);margin-bottom:10px;
-}
-body.light .risk-card{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.12);}
-.risk-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
-.risk-card-name{font-size:clamp(14px,4vw,17px);font-weight:700;color:#fff;}
+/* ── Risk cards ── */
+.risk-card{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+body.light .risk-card{background:rgba(0,0,0,.05);border-color:rgba(0,0,0,.10);}
+.risk-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px;}
+.risk-card-name{font-size:14px;font-weight:700;color:#fff;}
 body.light .risk-card-name{color:#0D1020;}
-.risk-card-tag{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.10em;padding:2px 8px;border-radius:100px;border:1px solid;display:block;margin-bottom:3px;text-align:right;}
-.risk-card-rate{font-family:'Space Mono',monospace;font-size:clamp(13px,3.5vw,15px);font-weight:700;text-align:right;}
-.risk-card-desc{font-size:clamp(11px,3vw,13px);color:rgba(255,255,255,.65);line-height:1.55;margin-bottom:10px;}
-body.light .risk-card-desc{color:rgba(0,0,0,.60);}
-.risk-card-bottom{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.10);padding-top:8px;}
-body.light .risk-card-bottom{border-top-color:rgba(0,0,0,.10);}
-.risk-lbl{font-family:'Space Mono',monospace;font-size:clamp(9px,2.4vw,11px);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);}
-body.light .risk-lbl{color:rgba(0,0,0,.50);}
-.risk-val{font-size:clamp(16px,4.5vw,20px);font-weight:700;display:inline-block;
-  background-size:300% 100%;animation:shimmer-text 2.4s linear infinite;
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.risk-tag{font-family:'Space Mono',monospace;font-size:8.5px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border-radius:100px;border:1px solid;display:block;margin-bottom:2px;text-align:right;}
+.risk-rate{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;text-align:right;}
+.risk-desc{font-size:11px;color:rgba(255,255,255,.62);line-height:1.5;margin-bottom:8px;}
+body.light .risk-desc{color:rgba(0,0,0,.58);}
+.risk-bottom{display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.08);padding-top:7px;}
+body.light .risk-bottom{border-color:rgba(0,0,0,.08);}
+.risk-lbl{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:rgba(255,255,255,.48);}
+body.light .risk-lbl{color:rgba(0,0,0,.45);}
+.risk-val{font-size:15px;font-weight:700;background-size:300% 100%;animation:shimmer 2.4s linear infinite;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
 .risk-green{background-image:linear-gradient(90deg,#22C55E 30%,#86EFAC 50%,#22C55E 70%);}
 .risk-red{background-image:linear-gradient(90deg,#EF4444 30%,#FCA5A5 50%,#EF4444 70%);}
-@keyframes shimmer-text{0%{background-position:200% 0;}100%{background-position:-100% 0;}}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-100% 0;}}
 
-/* ── S10 THANK YOU ── */
-.ty-big{font-family:'Space Grotesk',sans-serif;font-size:clamp(3rem,18vw,6rem);font-weight:700;line-height:.95;letter-spacing:-.04em;color:#fff;margin-bottom:clamp(20px,6vw,36px);}
+/* ── Thank you ── */
+.ty-big{font-family:'Space Grotesk',sans-serif;font-size:clamp(2.4rem,14vw,4rem);font-weight:700;line-height:.95;letter-spacing:-.04em;color:#fff;margin-bottom:16px;}
 body.light .ty-big{color:#0D1020;}
 .ty-grad{display:block;background:linear-gradient(120deg,#06C6D4,#8B5CF6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 body.light .ty-grad{background:linear-gradient(120deg,#0499A5,#6D28D9);-webkit-background-clip:text;background-clip:text;}
-.contact-list{display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(255,255,255,.12);padding-top:clamp(16px,4vw,24px);}
-body.light .contact-list{border-color:rgba(0,0,0,.12);}
-.contact-item{display:flex;flex-direction:column;gap:2px;}
-.contact-lbl{font-family:'Space Mono',monospace;font-size:10px;font-weight:400;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.50);}
-body.light .contact-lbl{color:rgba(0,0,0,.50);}
-.contact-val{font-size:clamp(13px,3.8vw,16px);font-weight:500;color:#fff;}
+.contact-grid{display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(255,255,255,.10);padding-top:14px;}
+body.light .contact-grid{border-color:rgba(0,0,0,.10);}
+.contact-lbl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:2px;}
+body.light .contact-lbl{color:rgba(0,0,0,.45);}
+.contact-val{font-size:13px;font-weight:500;color:#fff;}
 body.light .contact-val{color:#0D1020;}
 
-/* ── FOOTER DISC ── */
-.foot-disc{font-size:clamp(10px,2.5vw,12px);color:rgba(255,255,255,.38);line-height:1.6;margin-top:clamp(20px,5vw,32px);}
-body.light .foot-disc{color:rgba(0,0,0,.40);}
+/* ── S1 tag ── */
+.s1-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(111,155,209,.10);border:1px solid rgba(111,155,209,.28);border-radius:100px;padding:5px 14px;margin-bottom:10px;}
+.s1-dot{width:6px;height:6px;border-radius:50%;background:#DF3C5F;box-shadow:0 0 6px #DF3C5F;animation:pulse 2s ease-in-out infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.6);}}
+@keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+.s1-tag-txt{font-family:'Space Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);}
 
-/* ── DIVIDER ── */
-.rule{height:1px;background:linear-gradient(90deg,transparent,rgba(111,155,209,.7) 30%,rgba(139,92,246,.6) 70%,transparent);margin-bottom:clamp(14px,4vw,22px);}
+/* ── Meta row ── */
+.meta-row{display:flex;flex-wrap:wrap;gap:14px;border-top:1px solid rgba(255,255,255,.10);padding-top:12px;margin-top:12px;}
+body.light .meta-row{border-color:rgba(0,0,0,.10);}
+.meta-lbl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:2px;}
+body.light .meta-lbl{color:rgba(0,0,0,.45);}
+.meta-val{font-size:13px;font-weight:600;color:#fff;}
+body.light .meta-val{color:#0D1020;}
 
-/* ── CANVAS BG ── */
-#bg{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;}
-
-/* ── LANDSCAPE LAYOUT ── */
-@media(orientation:landscape) and (max-height:500px){
-  .slide{min-height:auto;padding:50px var(--ph) 40px;}
-  .ls-row{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
-  .ls-left{position:sticky;top:50px;}
-  .headline{font-size:clamp(1.4rem,5vw,2.2rem);}
-}
-
-/* ── LIGHT MODE SLIDE BG ── */
-body.light{background:#F0F4FF;}
-body.light .slide::before{background:linear-gradient(160deg,rgba(240,244,255,.85),rgba(235,232,255,.90));}
-body.light .slide{border-color:rgba(0,0,0,.06);}
+/* light text global */
+body.light .sub{color:rgba(0,0,0,.62);}
 </style>
 </head>
 <body>
 
 <canvas id="bg" aria-hidden="true"></canvas>
-<button id="theme-toggle"><span>🌙</span> Dark</button>
 
-<!-- ═══════════════════════════════════════
-     SLIDE 1 — HERO
-════════════════════════════════════════ -->
+<!-- FIXED HEADER -->
+<header id="mob-header">
+  <span class="hdr-company">[Company Name]</span>
+  <span class="hdr-num" id="hdr-num">01 / 06</span>
+</header>
+
+<!-- FIXED FOOTER -->
+<footer id="mob-footer">
+  <p class="ftr-disc">Confidential — [Company Name] © [Year]</p>
+  <div class="ftr-dots" id="ftr-dots">
+    <div class="ftr-dot on"></div>
+    <div class="ftr-dot"></div>
+    <div class="ftr-dot"></div>
+    <div class="ftr-dot"></div>
+    <div class="ftr-dot"></div>
+    <div class="ftr-dot"></div>
+  </div>
+  <div class="toggle-wrap">
+    <span class="toggle-lbl" id="tog-lbl">Dark</span>
+    <div class="ios-toggle" id="ios-toggle" onclick="toggleTheme()"></div>
+  </div>
+</footer>
+
+<!-- DECK: horizontal -->
+<div id="deck">
+
+<!-- ══ SLIDE 1 — HERO ══ -->
 <section class="slide" id="s1">
-  <div class="slide-inner">
-    <div class="slide-num">01 / 06</div>
-    <div class="rule"></div>
-    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(111,155,209,.10);border:1px solid rgba(111,155,209,.28);border-radius:100px;padding:6px 16px;margin-bottom:clamp(16px,5vw,24px);">
-      <span style="width:7px;height:7px;border-radius:50%;background:#DF3C5F;box-shadow:0 0 6px #DF3C5F;animation:pulse 2s ease-in-out infinite;flex-shrink:0;display:inline-block;"></span>
-      <span style="font-family:'Space Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);">Auto Trading Engine</span>
-    </div>
-    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(2rem,9vw,3.4rem);font-weight:700;line-height:1.03;letter-spacing:-.03em;color:#fff;margin-bottom:clamp(12px,4vw,20px);">The engine that trades while <em style="font-style:normal;font-weight:300;background:linear-gradient(120deg,#06C6D4,#8B5CF6 55%,#6F9BD1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">you think ahead.</em></h1>
-    <p class="sub">[One-line company positioning statement]</p>
-    <div style="display:flex;flex-wrap:wrap;gap:clamp(12px,4vw,20px);border-top:1px solid rgba(255,255,255,.12);padding-top:clamp(16px,5vw,24px);margin-top:clamp(16px,5vw,24px);">
-      <div><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.50);margin-bottom:4px;">Presented by</div><div style="font-size:clamp(13px,3.5vw,15px);font-weight:600;color:#fff;">[Presenter Name]</div></div>
-      <div><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.50);margin-bottom:4px;">Date</div><div style="font-size:clamp(13px,3.5vw,15px);font-weight:600;color:#fff;">[Date]</div></div>
-      <div><div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.50);margin-bottom:4px;">Version</div><div style="font-size:clamp(13px,3.5vw,15px);font-weight:600;color:#fff;">1.0 — Confidential</div></div>
-    </div>
-    <p class="foot-disc" style="margin-top:clamp(16px,5vw,28px);">Strictly confidential. Proprietary to [Company Name].</p>
+  <div class="rule"></div>
+  <div class="s1-tag"><span class="s1-dot"></span><span class="s1-tag-txt">Auto Trading Engine</span></div>
+  <h1 class="headline" style="font-size:clamp(1.6rem,8vw,2.4rem);">The engine that trades while <span>you think ahead.</span></h1>
+  <p class="sub">[One-line company positioning statement]</p>
+  <div class="meta-row">
+    <div><div class="meta-lbl">Presented by</div><div class="meta-val">[Presenter Name]</div></div>
+    <div><div class="meta-lbl">Date</div><div class="meta-val">[Date]</div></div>
+    <div><div class="meta-lbl">Version</div><div class="meta-val">1.0 — Confidential</div></div>
   </div>
+  <p style="font-size:10px;color:rgba(255,255,255,.30);margin-top:16px;line-height:1.5;">Strictly confidential. Proprietary to [Company Name]. Not for distribution.</p>
 </section>
 
-<!-- ═══════════════════════════════════════
-     SLIDE 2 — OPPORTUNITY COST
-════════════════════════════════════════ -->
+<!-- ══ SLIDE 2 — OPPORTUNITY COST ══ -->
 <section class="slide" id="s2">
-  <div class="slide-inner">
-    <div class="slide-num">02 / 06</div>
-    <div class="rule"></div>
-    <p class="eyebrow">The Opportunity Cost</p>
-    <h2 class="headline">Your Money Is <span>Quietly Shrinking</span></h2>
-    <p class="sub">After inflation, traditional instruments deliver near-zero real returns — while the gap quietly compounds every year you delay.</p>
+  <div class="rule"></div>
+  <p class="eyebrow">The Opportunity Cost</p>
+  <h2 class="headline">Your Money Is <span>Quietly Shrinking</span></h2>
+  <p class="sub">After inflation, traditional instruments deliver near-zero real returns.</p>
 
-    <!-- Key comparison: 3 rows only -->
-    <table class="comp-table" style="margin-bottom:14px;">
-      <thead><tr><th>Instrument</th><th>Rate p.a.</th><th>3-Yr Value</th></tr></thead>
-      <tbody>
-        <tr><td>Fixed Deposit</td><td style="color:#F3BA2F;font-family:'Space Mono',monospace;font-weight:700;">3.85%</td><td style="font-family:'Space Mono',monospace;">RM 11,199</td></tr>
-        <tr class="our-row green"><td>Core Strategy <span class="badge" style="color:#22C55E;border-color:rgba(34,197,94,.35);margin-left:4px;">OUR</span></td><td style="color:#22C55E;font-family:'Space Mono',monospace;font-weight:700;">~30%</td><td style="color:#22C55E;font-family:'Space Mono',monospace;">RM 21,970</td></tr>
-        <tr class="our-row red"><td>High Growth <span class="badge" style="color:#EF4444;border-color:rgba(239,68,68,.35);margin-left:4px;">OUR</span></td><td style="color:#EF4444;font-family:'Space Mono',monospace;font-weight:700;">~92%</td><td style="color:#EF4444;font-family:'Space Mono',monospace;">RM 70,886</td></tr>
-      </tbody>
-    </table>
+  <div class="stat-row">
+    <div class="stat-pill"><div class="stat-val" style="color:#8B5CF6;">6.3%</div><div class="stat-lbl">EPF 2024</div></div>
+    <div class="stat-pill"><div class="stat-val" style="color:#22C55E;">~30%</div><div class="stat-lbl">Core</div></div>
+    <div class="stat-pill"><div class="stat-val" style="color:#EF4444;">~92%</div><div class="stat-lbl">High</div></div>
+  </div>
 
-    <!-- 3 stats -->
-    <div class="stat-row">
-      <div class="stat-pill"><div class="stat-val" style="color:#8B5CF6;">6.3%</div><div class="stat-lbl">EPF 2024</div></div>
-      <div class="stat-pill"><div class="stat-val" style="color:#22C55E;">~30%</div><div class="stat-lbl">Core</div></div>
-      <div class="stat-pill"><div class="stat-val" style="color:#EF4444;">~92%</div><div class="stat-lbl">High Growth</div></div>
+  <table class="mob-table">
+    <thead><tr><th>Instrument</th><th>Rate</th><th>3-Yr Value</th></tr></thead>
+    <tbody>
+      <tr><td>Fixed Deposit</td><td style="color:#F3BA2F;font-family:'Space Mono',monospace;font-weight:700;">3.85%</td><td style="font-family:'Space Mono',monospace;">RM 11,199</td></tr>
+      <tr style="background:rgba(34,197,94,.07);"><td style="color:#22C55E;font-weight:700;">Core Strategy</td><td style="color:#22C55E;font-family:'Space Mono',monospace;font-weight:700;">~30%</td><td style="color:#22C55E;font-family:'Space Mono',monospace;font-weight:700;">RM 21,970</td></tr>
+      <tr style="background:rgba(239,68,68,.07);"><td style="color:#EF4444;font-weight:700;">High Growth</td><td style="color:#EF4444;font-family:'Space Mono',monospace;font-weight:700;">~92%</td><td style="color:#EF4444;font-family:'Space Mono',monospace;font-weight:700;">RM 70,886</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card acc" data-acc>
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left"><span class="acc-title">📄 Real Return After Inflation</span></div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     </div>
-
-    <!-- Expandable cards -->
-    <div class="card acc" style="margin-top:14px;" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <span class="acc-title">📄 Real Return After Inflation</span>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="acc-body"><div class="acc-content">Using 3.85% fixed-income bonds is not hedging against inflation. <em style="color:#F3BA2F;">You're just standing still.</em></div></div>
+    <div class="acc-body"><div class="acc-content">Using 3.85% fixed-income bonds is not hedging against inflation. <em style="color:#F3BA2F;">You're just standing still.</em></div></div>
+  </div>
+  <div class="card acc" data-acc>
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left"><span class="acc-title">⏳ The Crossroads</span></div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     </div>
-
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <span class="acc-title">⏳ The Crossroads</span>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="acc-body"><div class="acc-content">FD earns 3.85% p.a. Our platform targets <em style="color:#22C55E;">~92% p.a.</em> Which path you take, you decide.</div></div>
-    </div>
-
-    <div style="background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.28);border-radius:10px;padding:12px 14px;margin-top:4px;font-size:clamp(12px,3.2vw,14px);color:rgba(255,255,255,.88);line-height:1.55;">
-      🚀 <strong style="color:#22C55E;">High Growth:</strong> RM 10k → <strong style="color:#22C55E;">RM 70,886</strong> in 3 years — <strong style="color:#22C55E;">6× more</strong> than a Fixed Deposit.<br>
-      <span style="font-size:.88em;font-style:italic;color:#B07D00;">Returns shown are indicative estimates based on strategy backtests and are not guaranteed.</span>
-    </div>
-    <p class="foot-disc">Confidential — [Company Name] © [Year]. All rights reserved.</p>
+    <div class="acc-body"><div class="acc-content">FD earns 3.85% p.a. Our platform targets <em style="color:#22C55E;">~92% p.a.</em> Which path you take, you decide.</div></div>
+  </div>
+  <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:8px;padding:10px 12px;font-size:11.5px;color:rgba(255,255,255,.85);line-height:1.5;">
+    🚀 <strong style="color:#22C55E;">High Growth:</strong> RM 10k → <strong style="color:#22C55E;">RM 70,886</strong> in 3 years — <strong style="color:#22C55E;">6× more</strong> than FD.<br>
+    <span style="font-size:.88em;font-style:italic;color:#B07D00;">Indicative estimates. Not guaranteed.</span>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
-     SLIDE 3 — WHY MANUAL TRADING FAILS
-════════════════════════════════════════ -->
+<!-- ══ SLIDE 3 — WHY MANUAL FAILS ══ -->
 <section class="slide" id="s3">
-  <div class="slide-inner">
-    <div class="slide-num">03 / 06</div>
-    <div class="rule"></div>
-    <p class="eyebrow">The Case for Automation</p>
-    <h2 class="headline">Why Manual Trading Works <span>Against You</span></h2>
-    <p class="sub" style="font-style:italic;">Every edge you have on paper evaporates the moment emotion enters the trade.</p>
+  <div class="rule"></div>
+  <p class="eyebrow">The Case for Automation</p>
+  <h2 class="headline">Why Manual Trading Works <span>Against You</span></h2>
+  <p class="sub" style="font-style:italic;">Every edge evaporates the moment emotion enters the trade.</p>
 
-    <!-- 4 pain points as accordion cards -->
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#FF4D4D;filter:drop-shadow(0 0 6px rgba(255,26,26,.30));">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          </div>
-          <span class="acc-title">Emotion Overrides Logic</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+  <div class="card acc" data-acc>
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#FF4D4D;filter:drop-shadow(0 0 5px rgba(255,26,26,.30));"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+        <span class="acc-title">Emotion Overrides Logic</span>
       </div>
-      <div class="acc-body"><div class="acc-content">Fear and greed force exits at exactly the wrong moment — every time.</div></div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     </div>
+    <div class="acc-body"><div class="acc-content">Fear and greed force exits at exactly the wrong moment — every time.</div></div>
+  </div>
+  <div class="card acc" data-acc>
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#FFC107;filter:drop-shadow(0 0 5px rgba(255,160,0,.30));"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <span class="acc-title">You Can't Watch 24/7</span>
+      </div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+    </div>
+    <div class="acc-body"><div class="acc-content">Markets don't sleep. The best setups appear at 3 AM during Asian session.</div></div>
+  </div>
+  <div class="card acc" data-acc>
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#00E5FF;filter:drop-shadow(0 0 5px rgba(0,184,212,.30));"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l18 18M10.5 10.5A3 3 0 0 0 13.5 13.5"/><path d="M6.5 6.5A7 7 0 0 0 17.5 17.5"/></svg></div>
+        <span class="acc-title">No Repeatable Edge</span>
+      </div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+    </div>
+    <div class="acc-body"><div class="acc-content">Manual decisions are inconsistent — the same pattern yields different actions each time.</div></div>
+  </div>
+  <div class="card acc" data-acc>
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#9D4EDD;filter:drop-shadow(0 0 5px rgba(123,44,191,.30));"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <span class="acc-title">Drawdowns Compound Fast</span>
+      </div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+    </div>
+    <div class="acc-body"><div class="acc-content">A -20% loss requires a +25% gain to recover. Manual traders rarely recover in time.</div></div>
+  </div>
 
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#FFC107;filter:drop-shadow(0 0 6px rgba(255,160,0,.30));">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <span class="acc-title">You Can't Watch 24/7</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="acc-body"><div class="acc-content">Markets don't sleep. The best setups appear at 3 AM during Asian session.</div></div>
+  <button class="chart-btn" onclick="toggleChart(this)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    View 12-Month Equity Curve
+  </button>
+  <div class="chart-drawer" id="chart-drawer">
+    <div class="chart-wrap"><canvas id="eq-chart-mob"></canvas></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:6px;flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(255,255,255,.60);"><span style="width:7px;height:7px;border-radius:50%;background:#DF3C5F;display:inline-block;"></span>Manual</span>
+      <span style="display:flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(255,255,255,.60);"><span style="width:7px;height:7px;border-radius:50%;background:#C9A84C;display:inline-block;"></span>BTC</span>
+      <span style="display:flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:9.5px;color:rgba(255,255,255,.60);"><span style="width:7px;height:7px;border-radius:50%;background:#06C6D4;display:inline-block;"></span>Our System</span>
     </div>
-
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#00E5FF;filter:drop-shadow(0 0 6px rgba(0,184,212,.30));">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 3l18 18M10.5 10.5A3 3 0 0 0 13.5 13.5"/><path d="M6.5 6.5A7 7 0 0 0 17.5 17.5"/></svg>
-          </div>
-          <span class="acc-title">No Repeatable Edge</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="acc-body"><div class="acc-content">Manual decisions are inconsistent — the same pattern yields different actions each time.</div></div>
-    </div>
-
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#9D4EDD;filter:drop-shadow(0 0 6px rgba(123,44,191,.30));">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          </div>
-          <span class="acc-title">Drawdowns Compound Fast</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
-      </div>
-      <div class="acc-body"><div class="acc-content">A -20% loss requires a +25% gain to recover. Manual traders rarely recover in time.</div></div>
-    </div>
-
-    <!-- View Chart expandable -->
-    <button class="chart-toggle-btn" onclick="toggleChart()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      View 12-Month Equity Curve
-    </button>
-    <div class="chart-panel" id="chart-panel">
-      <div class="chart-wrap"><canvas id="eq-chart"></canvas></div>
-      <div style="display:flex;gap:14px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
-        <span style="display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.65);"><span style="width:8px;height:8px;border-radius:50%;background:#DF3C5F;display:inline-block;"></span>Manual Trader</span>
-        <span style="display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.65);"><span style="width:8px;height:8px;border-radius:50%;background:#C9A84C;display:inline-block;"></span>BTC Buy &amp; Hold</span>
-        <span style="display:flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,.65);"><span style="width:8px;height:8px;border-radius:50%;background:#06C6D4;display:inline-block;"></span>Our System</span>
-      </div>
-    </div>
-    <p class="foot-disc">Confidential — [Company Name] © [Year]. All rights reserved.</p>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
-     SLIDE 4 — HOW IT WORKS
-════════════════════════════════════════ -->
+<!-- ══ SLIDE 4 — HOW IT WORKS ══ -->
 <section class="slide" id="s4">
-  <div class="slide-inner">
-    <div class="slide-num">04 / 06</div>
-    <div class="rule"></div>
-    <p class="eyebrow">How It Works</p>
-    <h2 class="headline">The Engine That <span>Generates Returns</span></h2>
-    <p class="sub" style="font-style:italic;">From deposit to compounding profit — fully automated execution with zero operational friction.</p>
+  <div class="rule"></div>
+  <p class="eyebrow">How It Works</p>
+  <h2 class="headline">The Engine That <span>Generates Returns</span></h2>
+  <p class="sub" style="font-style:italic;">From deposit to compounding profit — fully automated.</p>
 
-    <!-- 3 step accordion cards -->
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#06C6D4;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-          </div>
-          <span class="acc-title">You Deposit Capital</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+  <div class="card acc" data-acc style="margin-bottom:6px;">
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#06C6D4;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <span class="acc-title">You Deposit Capital</span>
       </div>
-      <div class="acc-body"><div class="acc-content">Your principal sits in a ring-fenced Capital Account — never mixed with trading activity.</div></div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     </div>
-
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#F5A800;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-          </div>
-          <span class="acc-title">Algorithm Executes Trades 24/7</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+    <div class="acc-body"><div class="acc-content">Your principal sits in a ring-fenced Capital Account — never mixed with trading activity.</div></div>
+  </div>
+  <div class="card acc" data-acc style="margin-bottom:6px;">
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#F5A800;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
+        <span class="acc-title">Algorithm Executes Trades 24/7</span>
       </div>
-      <div class="acc-body"><div class="acc-content">Core Growth and High Growth engines run simultaneously across major crypto pairs.</div></div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     </div>
-
-    <div class="card acc" data-acc>
-      <div class="acc-header" onclick="toggleAcc(this)">
-        <div class="icon-row" style="flex:1;">
-          <div class="icon-wrap" style="color:#22C55E;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          </div>
-          <span class="acc-title">Profits Flow to Profit Account</span>
-        </div>
-        <span class="acc-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+    <div class="acc-body"><div class="acc-content">Core Growth and High Growth engines run simultaneously across major crypto pairs.</div></div>
+  </div>
+  <div class="card acc" data-acc style="margin-bottom:10px;">
+    <div class="acc-hdr" onclick="toggleAcc(this)">
+      <div class="acc-hdr-left">
+        <div class="acc-ico" style="color:#22C55E;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <span class="acc-title">Profits Flow to Profit Account</span>
       </div>
-      <div class="acc-body"><div class="acc-content">All realised gains transfer automatically — withdraw anytime or compound for growth.</div></div>
+      <div class="acc-arrow"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
     </div>
+    <div class="acc-body"><div class="acc-content">All realised gains transfer automatically — withdraw anytime or compound for growth.</div></div>
+  </div>
 
-    <!-- Vertical linear flow diagram -->
-    <div class="flow" style="margin-top:20px;">
-      <!-- Capital -->
-      <div class="flow-node">
-        <div class="flow-node-icon" style="background:linear-gradient(135deg,#36AFFF,#036bfc);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
-        <div>
-          <div class="flow-node-title">Capital Account</div>
-          <div class="flow-node-sub">Principal — ring-fenced &amp; secured</div>
-        </div>
-        <span style="font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#06C6D4;border:1px solid rgba(6,198,212,.35);border-radius:100px;padding:2px 8px;margin-left:auto;flex-shrink:0;">PRINCIPAL</span>
-      </div>
-
-      <div class="flow-arrow">
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-      </div>
-
-      <!-- Engine -->
-      <div class="flow-node" style="border-color:rgba(139,92,246,.40);background:rgba(139,92,246,.12);">
-        <div class="flow-node-icon" style="background:linear-gradient(135deg,#C86FFF,#9403fc);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="-6" y="-4" width="12" height="4" rx="1" transform="translate(12,12)"/><rect x="-6" y="2" width="12" height="4" rx="1" transform="translate(12,12)"/></svg>
-        </div>
-        <div style="flex:1;">
-          <div class="flow-node-title">Automated Engine</div>
-          <div class="flow-node-sub">Core (~30%) + High (~92%) — 24/7</div>
-        </div>
-        <span style="display:flex;align-items:center;gap:4px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#FF6B8A;border:1px solid rgba(223,60,95,.35);border-radius:100px;padding:2px 8px;flex-shrink:0;"><span style="width:5px;height:5px;border-radius:50%;background:#FF6B8A;animation:pulse 1.3s ease-in-out infinite;display:inline-block;"></span>LIVE</span>
-      </div>
-
-      <div class="flow-arrow">
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-      </div>
-
-      <!-- Profit -->
-      <div class="flow-node" style="border-color:rgba(34,197,94,.40);background:rgba(34,197,94,.08);">
-        <div class="flow-node-icon" style="background:linear-gradient(135deg,#6FFFB0,#1DB954);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-        </div>
-        <div>
-          <div class="flow-node-title">Profit Account</div>
-          <div class="flow-node-sub">Gains fully separated from capital</div>
-        </div>
-        <span style="font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#22C55E;border:1px solid rgba(34,197,94,.35);border-radius:100px;padding:2px 8px;margin-left:auto;flex-shrink:0;">GROWING</span>
-      </div>
-
-      <!-- Split: Withdraw + Compound -->
-      <div class="flow-arrow">
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-        <div class="chev" style="color:rgba(255,255,255,.6);">›</div>
-      </div>
-
-      <div class="flow-split">
-        <div class="flow-split-node">
-          <div class="flow-split-title" style="color:#06C6D4;">Withdraw</div>
-          <div class="flow-split-sub">On-demand · No lock-in</div>
-        </div>
-        <div class="flow-split-node">
-          <div class="flow-split-title" style="color:#8B5CF6;">Compound</div>
-          <div class="flow-split-sub">Reinvest → accelerate</div>
-        </div>
-      </div>
+  <div class="flow">
+    <div class="flow-node" style="border-color:rgba(6,198,212,.35);">
+      <div class="flow-icon" style="background:linear-gradient(135deg,#36AFFF,#036bfc);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+      <div><div class="flow-title">Capital Account</div><div class="flow-sub">Ring-fenced principal</div></div>
+      <span class="flow-badge" style="color:#06C6D4;border-color:rgba(6,198,212,.35);">PRINCIPAL</span>
     </div>
-    <p class="foot-disc" style="margin-top:16px;">Confidential — [Company Name] © [Year]. All rights reserved.</p>
+    <div class="flow-arrow">› › ›</div>
+    <div class="flow-node" style="border-color:rgba(139,92,246,.40);background:rgba(139,92,246,.10);">
+      <div class="flow-icon" style="background:linear-gradient(135deg,#C86FFF,#9403fc);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="-5" y="-4" width="10" height="3.5" rx="1" transform="translate(12,12)"/><rect x="-5" y="1.5" width="10" height="3.5" rx="1" transform="translate(12,12)"/></svg></div>
+      <div><div class="flow-title">Automated Engine</div><div class="flow-sub">Core + High — 24/7/365</div></div>
+      <span class="flow-badge" style="color:#FF6B8A;border-color:rgba(223,60,95,.35);display:flex;align-items:center;gap:3px;"><span style="width:5px;height:5px;border-radius:50%;background:#FF6B8A;animation:live-pulse 1.3s ease-in-out infinite;"></span>LIVE</span>
+    </div>
+    <div class="flow-arrow">› › ›</div>
+    <div class="flow-node" style="border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.07);">
+      <div class="flow-icon" style="background:linear-gradient(135deg,#6FFFB0,#1DB954);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+      <div><div class="flow-title">Profit Account</div><div class="flow-sub">Separated from capital</div></div>
+      <span class="flow-badge" style="color:#22C55E;border-color:rgba(34,197,94,.35);">GROWING</span>
+    </div>
+    <div class="flow-arrow">› › ›</div>
+    <div class="flow-split">
+      <div class="flow-split-card" style="border:1px solid rgba(6,198,212,.28);"><div class="flow-split-title" style="color:#06C6D4;">Withdraw</div><div class="flow-split-sub">On-demand</div></div>
+      <div class="flow-split-card" style="border:1px solid rgba(139,92,246,.28);"><div class="flow-split-title" style="color:#8B5CF6;">Compound</div><div class="flow-split-sub">Reinvest</div></div>
+    </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
-     SLIDE 5 — RISK VS RETURN
-════════════════════════════════════════ -->
+<!-- ══ SLIDE 5 — RISK VS RETURN ══ -->
 <section class="slide" id="s5">
-  <div class="slide-inner">
-    <div class="slide-num">05 / 06</div>
-    <div class="rule"></div>
-    <p class="eyebrow">Choose Your Strategies</p>
-    <h2 class="headline">Risk-Adjusted <span>Return Profile</span></h2>
-    <p class="sub" style="font-style:italic;">Successful investing is not about maximizing returns — it's about optimizing risk and reward.</p>
+  <div class="rule"></div>
+  <p class="eyebrow">Choose Your Strategies</p>
+  <h2 class="headline">Risk-Adjusted <span>Return Profile</span></h2>
+  <p class="sub" style="font-style:italic;">Optimizing risk and reward — not just maximizing returns.</p>
 
-    <!-- Conservative System card -->
-    <div class="risk-card">
-      <div class="risk-card-top">
-        <div class="risk-card-name">Conservative System</div>
-        <div>
-          <div class="risk-card-tag" style="color:#22C55E;border-color:rgba(34,197,94,.38);">CORE GROWTH</div>
-          <div class="risk-card-rate" style="color:#22C55E;">~30% p.a.</div>
-        </div>
-      </div>
-      <div class="risk-card-desc">Low-frequency execution featuring tight stop-losses for capital preservation and steady compounding.</div>
-      <div class="risk-card-bottom">
-        <span class="risk-lbl">RISK LEVEL</span>
-        <span class="risk-val risk-green">Moderate</span>
-      </div>
+  <div class="risk-card">
+    <div class="risk-card-top">
+      <div class="risk-card-name">Conservative System</div>
+      <div><div class="risk-tag" style="color:#22C55E;border-color:rgba(34,197,94,.35);">CORE GROWTH</div><div class="risk-rate" style="color:#22C55E;">~30% p.a.</div></div>
     </div>
-
-    <!-- Aggressive System card -->
-    <div class="risk-card">
-      <div class="risk-card-top">
-        <div class="risk-card-name">Aggressive System</div>
-        <div>
-          <div class="risk-card-tag" style="color:#DF3C5F;border-color:rgba(223,60,95,.38);">HIGH GROWTH</div>
-          <div class="risk-card-rate" style="color:#DF3C5F;">~92% p.a.</div>
-        </div>
-      </div>
-      <div class="risk-card-desc">High-frequency momentum trading in volatile markets for aggressively maximized returns.</div>
-      <div class="risk-card-bottom">
-        <span class="risk-lbl">RISK LEVEL</span>
-        <span class="risk-val risk-red">High</span>
-      </div>
+    <div class="risk-desc">Low-frequency execution with tight stop-losses for capital preservation and steady compounding.</div>
+    <div class="risk-bottom"><span class="risk-lbl">RISK LEVEL</span><span class="risk-val risk-green">Moderate</span></div>
+  </div>
+  <div class="risk-card">
+    <div class="risk-card-top">
+      <div class="risk-card-name">Aggressive System</div>
+      <div><div class="risk-tag" style="color:#DF3C5F;border-color:rgba(223,60,95,.35);">HIGH GROWTH</div><div class="risk-rate" style="color:#DF3C5F;">~92% p.a.</div></div>
     </div>
+    <div class="risk-desc">High-frequency momentum trading in volatile markets for aggressively maximized returns.</div>
+    <div class="risk-bottom"><span class="risk-lbl">RISK LEVEL</span><span class="risk-val risk-red">High</span></div>
+  </div>
 
-    <!-- Comparison table -->
-    <table class="comp-table" style="margin-top:8px;">
-      <thead><tr><th>Instrument</th><th>Risk</th><th>Return</th></tr></thead>
-      <tbody>
-        <tr><td>Fixed Deposit</td><td style="font-family:'Space Mono',monospace;">~2%</td><td style="font-family:'Space Mono',monospace;">3.85%</td></tr>
-        <tr><td>EPF</td><td style="font-family:'Space Mono',monospace;">~4%</td><td style="font-family:'Space Mono',monospace;">6.15%</td></tr>
-        <tr><td>ASB</td><td style="font-family:'Space Mono',monospace;">~6%</td><td style="font-family:'Space Mono',monospace;">5.50%</td></tr>
-        <tr><td>Unit Trust</td><td style="font-family:'Space Mono',monospace;">~20%</td><td style="font-family:'Space Mono',monospace;">7.80%</td></tr>
-        <tr><td>BTC (hold)</td><td style="font-family:'Space Mono',monospace;">~70%</td><td style="font-family:'Space Mono',monospace;">~42%</td></tr>
-        <tr class="our-row green"><td>Core Strategy</td><td style="color:#22C55E;font-family:'Space Mono',monospace;font-weight:700;">~12%</td><td style="color:#22C55E;font-family:'Space Mono',monospace;font-weight:700;">~30%</td></tr>
-        <tr class="our-row red"><td>High Growth</td><td style="color:#EF4444;font-family:'Space Mono',monospace;font-weight:700;">~35%</td><td style="color:#EF4444;font-family:'Space Mono',monospace;font-weight:700;">~92%</td></tr>
-      </tbody>
-    </table>
-
-    <div style="display:flex;align-items:flex-start;gap:5px;margin-top:10px;font-size:clamp(10px,2.6vw,12px);color:rgba(255,255,255,.50);font-style:italic;line-height:1.55;">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      Illustrative return scenarios based on historical market data. Actual performance may differ and is not guaranteed.
-    </div>
-    <p class="foot-disc">Confidential — [Company Name] © [Year]. All rights reserved.</p>
+  <table class="mob-table">
+    <thead><tr><th>Instrument</th><th>Risk</th><th>Return</th></tr></thead>
+    <tbody>
+      <tr><td>Fixed Deposit</td><td style="font-family:'Space Mono',monospace;">~2%</td><td style="font-family:'Space Mono',monospace;">3.85%</td></tr>
+      <tr><td>EPF</td><td style="font-family:'Space Mono',monospace;">~5%</td><td style="font-family:'Space Mono',monospace;">6.15%</td></tr>
+      <tr><td>Unit Trust</td><td style="font-family:'Space Mono',monospace;">~20%</td><td style="font-family:'Space Mono',monospace;">7.80%</td></tr>
+      <tr><td>BTC (hold)</td><td style="font-family:'Space Mono',monospace;">~70%</td><td style="font-family:'Space Mono',monospace;">~42%</td></tr>
+      <tr style="background:rgba(34,197,94,.07);"><td style="color:#22C55E;font-weight:700;">Core Strategy</td><td style="font-family:'Space Mono',monospace;color:#22C55E;font-weight:700;">~12%</td><td style="font-family:'Space Mono',monospace;color:#22C55E;font-weight:700;">~30%</td></tr>
+      <tr style="background:rgba(239,68,68,.07);"><td style="color:#EF4444;font-weight:700;">High Growth</td><td style="font-family:'Space Mono',monospace;color:#EF4444;font-weight:700;">~35%</td><td style="font-family:'Space Mono',monospace;color:#EF4444;font-weight:700;">~92%</td></tr>
+    </tbody>
+  </table>
+  <div style="display:flex;align-items:flex-start;gap:4px;font-size:10px;color:rgba(255,255,255,.40);font-style:italic;line-height:1.5;">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    Illustrative scenarios. Actual performance may differ and is not guaranteed.
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════
-     SLIDE 6 — THANK YOU
-════════════════════════════════════════ -->
-<section class="slide" id="s10">
-  <div class="slide-inner">
-    <div class="slide-num">06 / 06</div>
-    <div class="rule"></div>
-    <div class="ty-big">Thank<span class="ty-grad">You.</span></div>
-    <div class="contact-list">
-      <div class="contact-item"><div class="contact-lbl">Email</div><div class="contact-val">[contact@company.com]</div></div>
-      <div class="contact-item"><div class="contact-lbl">Website</div><div class="contact-val">[www.company.com]</div></div>
-      <div class="contact-item"><div class="contact-lbl">Phone</div><div class="contact-val">[+XX XXX XXX XXXX]</div></div>
-    </div>
-    <p class="foot-disc" style="margin-top:clamp(20px,6vw,32px);">© [Year] [Company Name]. All rights reserved. Confidential and proprietary.</p>
+<!-- ══ SLIDE 6 — THANK YOU ══ -->
+<section class="slide" id="s6">
+  <div class="rule"></div>
+  <div class="ty-big">Thank<span class="ty-grad">You.</span></div>
+  <div class="contact-grid">
+    <div><div class="contact-lbl">Email</div><div class="contact-val">[contact@company.com]</div></div>
+    <div><div class="contact-lbl">Website</div><div class="contact-val">[www.company.com]</div></div>
+    <div><div class="contact-lbl">Phone</div><div class="contact-val">[+XX XXX XXX XXXX]</div></div>
   </div>
+  <p style="font-size:10px;color:rgba(255,255,255,.28);margin-top:20px;line-height:1.5;">© [Year] [Company Name]. All rights reserved. Confidential and proprietary.</p>
 </section>
 
-<style>
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.35;transform:scale(.6);}}
-body.light .slide::before{background:linear-gradient(160deg,rgba(240,244,255,.88),rgba(235,232,255,.92));}
-body.light .headline{color:#0D1020;}
-body.light .acc-title{color:#0D1020;}
-body.light .flow-node-title{color:#0D1020;}
-body.light .risk-card-name{color:#0D1020;}
-body.light .ty-big{color:#0D1020;}
-body.light .contact-val{color:#0D1020;}
-body.light h1{color:#0D1020 !important;}
-body.light [style*="color:#fff"]{color:#0D1020;}
-</style>
+</div><!-- end #deck -->
 
 <script>
 /* ── CANVAS BG ── */
 (function(){
   const cv=document.getElementById('bg');
   const ctx=cv.getContext('2d',{alpha:false,desynchronized:true});
-  const mob=true; // always mobile
   let W=0,H=0;
   function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
   const ORBS=[
-    {ox:.15,oy:.25,rr:.62,c0:'rgba(34,65,147,.50)',px:0,py:0,ax:.05,ay:.07},
-    {ox:.82,oy:.32,rr:.58,c0:'rgba(124,58,237,.38)',px:1.2,py:.7,ax:.06,ay:.04},
-    {ox:.48,oy:.85,rr:.55,c0:'rgba(6,198,212,.28)',px:2.1,py:1.5,ax:.04,ay:.04},
+    {ox:.15,oy:.25,rr:.60,c0:'rgba(34,65,147,.50)',px:0,py:0,ax:.05,ay:.07},
+    {ox:.82,oy:.32,rr:.56,c0:'rgba(124,58,237,.38)',px:1.2,py:.7,ax:.06,ay:.04},
+    {ox:.48,oy:.85,rr:.52,c0:'rgba(6,198,212,.26)',px:2.1,py:1.5,ax:.04,ay:.04},
   ];
   function cl(a,v,b){return Math.max(a,Math.min(b,v));}
   const TOKENS=[
     {name:'BTC',c1:'#FF9500',c2:'#E06000',draw(x,r,g){x.fillStyle=g;x.fill();x.fillStyle='rgba(255,255,255,.95)';x.font=`900 ${r*.64}px Arial`;x.textAlign='center';x.textBaseline='middle';x.fillText('\u20BF',r*.04,r*.06);}},
     {name:'ETH',c1:'#4A4A5A',c2:'#2A2A3A',draw(x,r,g){x.fillStyle=g;x.fill();const s=r*.36;const tri=(pts,col)=>{x.beginPath();pts.forEach(([a,b],i)=>i?x.lineTo(a,b):x.moveTo(a,b));x.closePath();x.fillStyle=col;x.fill();};tri([[0,-s*1.3],[s*.65,0],[0,-s*.1]],'rgba(255,255,255,.95)');tri([[0,-s*1.3],[-s*.65,0],[0,-s*.1]],'rgba(255,255,255,.65)');tri([[0,s*1.3],[s*.65,0],[0,s*.06]],'rgba(255,255,255,.85)');tri([[0,s*1.3],[-s*.65,0],[0,s*.06]],'rgba(255,255,255,.55)');}},
-    {name:'USDT',c1:'#1A9E8A',c2:'#0D6B5E',draw(x,r,g){x.fillStyle=g;x.fill();x.fillStyle='rgba(255,255,255,.95)';x.font=`900 ${r*.44}px Arial`;x.textAlign='center';x.textBaseline='middle';x.fillText('T',0,r*.04);}},
-    {name:'BNB',c1:'#F0B90B',c2:'#C8960A',draw(x,r,g){x.fillStyle=g;x.fill();x.fillStyle='rgba(255,255,255,.92)';const s=r*.20;const sq=(ox,oy)=>{x.save();x.translate(ox,oy);x.rotate(Math.PI/4);x.fillRect(-s,-s,s*2,s*2);x.restore();};sq(0,0);sq(0,-s*2.3);sq(0,s*2.3);sq(-s*2.3,0);sq(s*2.3,0);}},
     {name:'SOL',c1:'#1A1A2E',c2:'#0D0D1A',draw(x,r,g){x.fillStyle=g;x.fill();const bg=x.createLinearGradient(-r*.44,0,r*.44,0);bg.addColorStop(0,'rgba(153,69,255,.95)');bg.addColorStop(1,'rgba(20,241,149,.95)');x.fillStyle=bg;const bar=(oy)=>{x.beginPath();x.moveTo(-r*.44+r*.08,oy);x.lineTo(r*.44,oy);x.lineTo(r*.44-r*.08,oy+r*.14);x.lineTo(-r*.44,oy+r*.14);x.closePath();x.fill();};bar(-r*.34);bar(-r*.07);bar(r*.20);}},
+    {name:'BNB',c1:'#F0B90B',c2:'#C8960A',draw(x,r,g){x.fillStyle=g;x.fill();x.fillStyle='rgba(255,255,255,.90)';const s=r*.18;const sq=(ox,oy)=>{x.save();x.translate(ox,oy);x.rotate(Math.PI/4);x.fillRect(-s,-s,s*2,s*2);x.restore();};sq(0,0);sq(0,-s*2.2);sq(0,s*2.2);sq(-s*2.2,0);sq(s*2.2,0);}},
   ];
-  const MAX=8;let coins=[];
+  const MAX=7;let coins=[];
   function mkCoin(){
     const tok=TOKENS[Math.floor(Math.random()*TOKENS.length)];
-    const r=cl(30,W*.055,70)*(.75+Math.random()*.5);
+    const r=cl(28,W*.055,60)*(.75+Math.random()*.5);
     return{tok,baseR:r,r,hx:r+Math.random()*(W-r*2),hy:r+Math.random()*(H-r*2),
-      rot:Math.random()*Math.PI*2,rs:(Math.random()-.5)*.003,tilt:.50+Math.random()*.38,
-      px:Math.random()*Math.PI*2,py:Math.random()*Math.PI*2,pb:Math.random()*Math.PI*2,ps:Math.random()*Math.PI*2,
-      vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.12,
-      wx:3+Math.random()*5,wy:2+Math.random()*4,
-      wfx:.010+Math.random()*.012,wfy:.008+Math.random()*.010,
-      bf:.005+Math.random()*.006,ba:r*(.06+Math.random()*.08),
-      sf:.003+Math.random()*.003,sa:.15+Math.random()*.18,burst:0};
+      rot:Math.random()*Math.PI*2,rs:(Math.random()-.5)*.003,tilt:.50+Math.random()*.35,
+      px:Math.random()*Math.PI*2,py:Math.random()*Math.PI*2,ps:Math.random()*Math.PI*2,
+      vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.10,
+      wx:3+Math.random()*4,wy:2+Math.random()*3,
+      wfx:.009+Math.random()*.011,wfy:.007+Math.random()*.009,
+      bf:.004+Math.random()*.005,ba:r*(.05+Math.random()*.07),
+      sf:.002+Math.random()*.003,sa:.12+Math.random()*.16};
   }
-  function initCoins(){coins=[];for(let i=0;i<MAX;i++){coins.push(mkCoin());}}
+  function initCoins(){coins=[];for(let i=0;i<MAX;i++)coins.push(mkCoin());}
   function drawToken(c,t){
     const breathe=1+Math.sin(t*c.sf+c.ps)*c.sa;c.r=c.baseR*breathe;
     c.hx+=c.vx;c.hy+=c.vy;
     const m=c.r*2;if(c.hx<-m)c.hx=W+m;if(c.hx>W+m)c.hx=-m;if(c.hy<-m)c.hy=H+m;if(c.hy>H+m)c.hy=-m;
     const dx=Math.sin(t*c.wfx+c.px)*c.wx;const dy=Math.cos(t*c.wfy+c.py)*c.wy;
     c.rot+=c.rs;const r=c.r;
-    const al=window._lightMode?0.10:0.55;
+    const al=window._lightMode?0.08:0.50;
     if(!c._grR||Math.abs(c._grR-r)>2){
       const grd=ctx.createRadialGradient(-r*.3,-r*.3,0,0,0,r*1.1);grd.addColorStop(0,c.tok.c1);grd.addColorStop(1,c.tok.c2);c._gr=grd;
       const sh=ctx.createRadialGradient(-r*.35,-r*.38,0,-r*.35,-r*.38,r*.75);sh.addColorStop(0,'rgba(255,255,255,.22)');sh.addColorStop(1,'rgba(255,255,255,0)');c._sh=sh;c._grR=r;
     }
     ctx.save();ctx.globalAlpha=al;ctx.translate(c.hx+dx,c.hy+dy);ctx.rotate(c.rot);ctx.scale(1,c.tilt);
     ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.clip();
-    c.tok.draw(ctx,r,c._gr);
-    ctx.fillStyle=c._sh;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=al*.40;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.strokeStyle=c.tok.c1;ctx.lineWidth=cl(.6,r*.05,2);ctx.stroke();
+    c.tok.draw(ctx,r,c._gr);ctx.fillStyle=c._sh;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=al*.40;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.strokeStyle=c.tok.c1;ctx.lineWidth=cl(.5,r*.05,1.8);ctx.stroke();
     ctx.restore();
   }
-  let t=0,rafId=null,lastF=0;
-  const FMS=33; // ~30fps for mobile
+  let t=0,rafId=null,lastF=0;const FMS=36;
   function frame(ts){
-    rafId=requestAnimationFrame(frame);
-    if(ts-lastF<FMS)return;lastF=ts;t++;
+    rafId=requestAnimationFrame(frame);if(ts-lastF<FMS)return;lastF=ts;t++;
     ctx.fillStyle=window._lightMode?'#F0F4FF':'#060818';ctx.fillRect(0,0,W,H);
     if(t%6===0){ORBS.forEach(o=>{
-      const cx=(o.ox+Math.sin(t*.00075+o.px)*o.ax)*W;
-      const cy=(o.oy+Math.cos(t*.00055+o.py)*o.ay)*H;
-      const rr=o.rr*W;const g=ctx.createRadialGradient(cx,cy,0,cx,cy,rr);
-      const alpha=window._lightMode?'0.06':null;
-      const c0=alpha?o.c0.replace(/[\d.]+(?=\))/,alpha):o.c0;
+      const cx=(o.ox+Math.sin(t*.00075+o.px)*o.ax)*W,cy=(o.oy+Math.cos(t*.00055+o.py)*o.ay)*H,rr=o.rr*W;
+      const g=ctx.createRadialGradient(cx,cy,0,cx,cy,rr);
+      const c0=window._lightMode?o.c0.replace(/[\d.]+(?=\))/,'0.05'):o.c0;
       g.addColorStop(0,c0);g.addColorStop(1,'rgba(0,0,0,0)');o._g=g;
     });}
     ORBS.forEach(o=>{if(o._g){ctx.fillStyle=o._g;ctx.fillRect(0,0,W,H);}});
@@ -691,47 +558,80 @@ body.light [style*="color:#fff"]{color:#0D1020;}
   resize();initCoins();rafId=requestAnimationFrame(frame);
   window.addEventListener('resize',()=>{resize();initCoins();},{passive:true});
   document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){if(rafId)cancelAnimationFrame(rafId);rafId=null;}
+    if(document.hidden){cancelAnimationFrame(rafId);rafId=null;}
     else{lastF=0;rafId=requestAnimationFrame(frame);}
   });
 })();
 
-/* ── THEME TOGGLE ── */
+/* ── HORIZONTAL SLIDE ENGINE ── */
 (function(){
-  const btn=document.getElementById('theme-toggle');
-  window._lightMode=false;
-  btn.addEventListener('click',()=>{
-    window._lightMode=!window._lightMode;
-    document.body.classList.toggle('light',window._lightMode);
-    btn.innerHTML=window._lightMode?'<span>☀️</span> Light':'<span>🌙</span> Dark';
-  });
+  const deck=document.getElementById('deck');
+  const slides=Array.from(document.querySelectorAll('.slide'));
+  const dots=Array.from(document.querySelectorAll('.ftr-dot'));
+  const hdrNum=document.getElementById('hdr-num');
+  const N=slides.length;
+  let cur=0,locked=false;
+
+  function go(idx){
+    if(idx<0||idx>=N||locked)return;
+    locked=true;cur=idx;
+    deck.style.transition='transform .42s cubic-bezier(0.22,1,0.36,1)';
+    deck.style.transform=`translateX(-${cur*100}%)`;
+    hdrNum.textContent=`0${cur+1} / 0${N}`;
+    dots.forEach((d,i)=>d.classList.toggle('on',i===cur));
+    setTimeout(()=>locked=false,450);
+  }
+
+  // Touch swipe
+  let tx0=0,ty0=0;
+  deck.addEventListener('touchstart',e=>{tx0=e.touches[0].clientX;ty0=e.touches[0].clientY;},{passive:true});
+  deck.addEventListener('touchend',e=>{
+    const dx=tx0-e.changedTouches[0].clientX;
+    const dy=Math.abs(ty0-e.changedTouches[0].clientY);
+    if(Math.abs(dx)>40&&Math.abs(dx)>dy){
+      if(dx>0)go(cur+1);else go(cur-1);
+    }
+  },{passive:true});
+
+  // Dot click
+  dots.forEach((d,i)=>d.addEventListener('click',()=>go(i)));
+
+  go(0);
 })();
+
+/* ── THEME TOGGLE ── */
+window._lightMode=false;
+function toggleTheme(){
+  window._lightMode=!window._lightMode;
+  document.body.classList.toggle('light',window._lightMode);
+  const tog=document.getElementById('ios-toggle');
+  const lbl=document.getElementById('tog-lbl');
+  tog.classList.toggle('on',window._lightMode);
+  lbl.textContent=window._lightMode?'Light':'Dark';
+}
 
 /* ── ACCORDION ── */
 function toggleAcc(header){
   const acc=header.closest('.acc');
-  const isOpen=acc.classList.contains('open');
-  acc.classList.toggle('open',!isOpen);
+  acc.classList.toggle('open');
 }
 
 /* ── VIEW CHART ── */
 let chartDrawn=false;
-function toggleChart(){
-  const panel=document.getElementById('chart-panel');
-  const isOpen=panel.classList.contains('open');
-  panel.classList.toggle('open',!isOpen);
-  if(!isOpen&&!chartDrawn){setTimeout(drawEquityChart,300);chartDrawn=true;}
+function toggleChart(btn){
+  const drawer=document.getElementById('chart-drawer');
+  const open=drawer.classList.toggle('open');
+  btn.innerHTML=(open?'▼':'▶')+' '+(open?'Hide':'View')+' 12-Month Equity Curve';
+  if(open&&!chartDrawn){setTimeout(drawChart,350);chartDrawn=true;}
 }
-function drawEquityChart(){
-  const canvas=document.getElementById('eq-chart');
-  if(!canvas)return;
-  const wrap=canvas.parentElement;
-  const dpr=window.devicePixelRatio||1;
+function drawChart(){
+  const canvas=document.getElementById('eq-chart-mob');if(!canvas)return;
+  const wrap=canvas.parentElement;const dpr=window.devicePixelRatio||1;
   canvas.width=wrap.offsetWidth*dpr;canvas.height=wrap.offsetHeight*dpr;
   canvas.style.width=wrap.offsetWidth+'px';canvas.style.height=wrap.offsetHeight+'px';
   const ctx=canvas.getContext('2d',{alpha:true});ctx.scale(dpr,dpr);
   const W=wrap.offsetWidth,H=wrap.offsetHeight;
-  const PAD={t:20,r:16,b:32,l:36};const cW=W-PAD.l-PAD.r,cH=H-PAD.t-PAD.b;
+  const PAD={t:14,r:10,b:26,l:30};const cW=W-PAD.l-PAD.r,cH=H-PAD.t-PAD.b;
   const months=['J','F','M','A','M','J','J','A','S','O','N','D'];
   const algo=[100,104,102,108,106,112,110,117,115,122,120,128,134];
   const manual=[100,103,100,97,100,96,99,95,98,93,96,92,89];
@@ -739,58 +639,28 @@ function drawEquityChart(){
   const minV=82,maxV=138;
   const xOf=i=>PAD.l+(i/(algo.length-1))*cW;
   const yOf=v=>PAD.t+cH-((v-minV)/(maxV-minV))*cH;
-  ctx.clearRect(0,0,W,H);
-  // white bg
   ctx.fillStyle='rgba(255,255,255,.90)';ctx.fillRect(0,0,W,H);
-  // grid
   ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;
   [90,100,110,120,130].forEach(v=>{
     const y=yOf(v);ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+cW,y);ctx.stroke();
-    ctx.fillStyle='rgba(0,0,0,.50)';ctx.font=`${Math.round(W*.028)}px Space Mono,monospace`;
-    ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(v+'%',PAD.l-4,y);
+    ctx.fillStyle='rgba(0,0,0,.50)';ctx.font=`${Math.round(W*.030)}px Space Mono,monospace`;
+    ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(v+'%',PAD.l-3,y);
   });
-  ctx.fillStyle='rgba(0,0,0,.50)';ctx.font=`${Math.round(W*.028)}px Space Mono,monospace`;
+  ctx.fillStyle='rgba(0,0,0,.45)';ctx.font=`${Math.round(W*.030)}px Space Mono,monospace`;
   ctx.textAlign='center';ctx.textBaseline='top';
-  months.forEach((m,i)=>ctx.fillText(m,xOf(i),PAD.t+cH+4));
-  // lines
-  function line(data,color,w,dash=[]){
-    ctx.save();ctx.strokeStyle=color;ctx.lineWidth=w;ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash(dash);
-    ctx.beginPath();data.forEach((v,i)=>i===0?ctx.moveTo(xOf(i),yOf(v)):ctx.lineTo(xOf(i),yOf(v)));
-    ctx.stroke();ctx.restore();
-  }
-  line(btc,'rgba(160,120,10,.80)',1.5,[5,4]);
+  months.forEach((m,i)=>ctx.fillText(m,xOf(i),PAD.t+cH+3));
+  function line(d,col,w,dash=[]){ctx.save();ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineJoin='round';ctx.lineCap='round';ctx.setLineDash(dash);ctx.beginPath();d.forEach((v,i)=>i?ctx.lineTo(xOf(i),yOf(v)):ctx.moveTo(xOf(i),yOf(v)));ctx.stroke();ctx.restore();}
+  line(btc,'rgba(160,120,10,.80)',1.5,[4,3]);
   line(manual,'rgba(200,20,55,.90)',2);
   line(algo,'rgba(0,170,185,1)',2.5);
-  // endpoint dots
-  [[algo,'#06C6D4'],[manual,'#DF3C5F'],[btc,'#C9A84C']].forEach(([d,c])=>{
-    const i=d.length-1;ctx.beginPath();ctx.arc(xOf(i),yOf(d[i]),4,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();
-  });
-  // callout
+  [[algo,'#06C6D4'],[manual,'#DF3C5F'],[btc,'#C9A84C']].forEach(([d,c])=>{const i=d.length-1;ctx.beginPath();ctx.arc(xOf(i),yOf(d[i]),3.5,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();});
   const ax=xOf(algo.length-1),ay=yOf(algo[algo.length-1]);
-  const lw=52,lh=20,lx=ax-lw-6,ly=ay-lh/2;
-  ctx.fillStyle='rgba(6,198,212,.15)';ctx.strokeStyle='rgba(6,198,212,.8)';ctx.lineWidth=1.2;
-  ctx.beginPath();ctx.roundRect(lx,ly,lw,lh,4);ctx.fill();ctx.stroke();
-  ctx.fillStyle='#007A8A';ctx.font=`700 ${Math.round(W*.032)}px Space Mono,monospace`;
+  const lw=46,lh=17,lx=ax-lw-4,ly=ay-lh/2;
+  ctx.fillStyle='rgba(6,198,212,.15)';ctx.strokeStyle='rgba(6,198,212,.8)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.roundRect(lx,ly,lw,lh,3);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#007A8A';ctx.font=`700 ${Math.round(W*.033)}px Space Mono,monospace`;
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('+34%',lx+lw/2,ay);
 }
-
-/* ── SWIPE ── */
-(function(){
-  let ty0=0;
-  document.addEventListener('touchstart',e=>{ty0=e.touches[0].clientY;},{passive:true});
-  document.addEventListener('touchend',e=>{
-    const dy=ty0-e.changedTouches[0].clientY;
-    if(Math.abs(dy)>50){
-      const slides=Array.from(document.querySelectorAll('.slide'));
-      const current=slides.find(s=>{const r=s.getBoundingClientRect();return r.top<=100&&r.bottom>100;});
-      if(current){
-        const idx=slides.indexOf(current);
-        const next=dy>0?slides[idx+1]:slides[idx-1];
-        if(next)next.scrollIntoView({behavior:'smooth',block:'start'});
-      }
-    }
-  },{passive:true});
-})();
 </script>
 </body>
 </html>
